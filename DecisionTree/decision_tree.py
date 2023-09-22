@@ -1,53 +1,75 @@
 from math import log2 as log
 
-
-class node:
-    inputDomain = []
-
+class decisionTree:
+    data = []
+    MCV = None  #most common value in tree
     isLeaf = False
-    mostCommonVal = None
 
-    inputs = []
-    outputs = []
+    usedSplit = []
 
-    nextNodes = {}
-    heuristic = None
-    bestSplit = None
+    next = {}
 
-    def __init__(self, data, heuristic):
-        self.input = [entry[:-1] for entry in data]
-        self.outputs = [entry[-1] for entry in data]
-        self.heuristic = heuristic
+    gainFunction = None
+    nodeHeuristicIdx = None  #what this node returns from gain function
+    
+    
+    def __init__(self, data):
+        self.data = data
+        for i in data[0:-1]:
+            self.usedSplit.append(False)
 
     def split(self, maxDepth):
-        if maxDepth < 0:
-            return
-        elif maxDepth == 1:
-            self.isLeaf = True
-            maxCount = 0
-            mostCommonVal = self.outputs[0]
-            for o in self.outputs:
-                count = self.outputs.count(o)
-                if(count > maxCount):
-                    maxCount = count
-                    mostCommonVal = o
-        
-        # run ID3 on node
-        else:
-            pass
-        
-
-    def printNode(self):
-        print("ID: ", self.bestSplit, " --- ", len(self.nextNodes.keys()), " child nodes", sep="")
-        if self.isLeaf:
-            print(self.leafVal)
-
-data = []
-
-with open("train.csv", 'r') as f:
-    for line in f:
-        data.append(line.strip().split(","))
+        pass
 
 
 
-root = node(data)
+data = [
+    [0,0,1,0,0],
+    [0,1,0,0,0],
+    [0,0,1,1,1],
+    [1,0,0,1,1],
+    [0,1,1,0,0],
+    [1,1,0,0,0],
+    [0,1,0,1,0]
+]
+
+
+print()
+
+# CSV = 'train.csv'
+# with open(CSV, 'r') as f:
+#     for line in f:
+#         data.append(line.strip().split(','))
+
+root = decisionTree(data)
+
+def majorityError(data):
+    out = []
+    
+    for i in range(len(data[0])-1):
+        subset = [[data[i], data[-1]] for x in data if data[i] == 1]
+        y,n = 0
+        for e in subset:
+            if e[1]:
+                y+=1
+            else:
+                n+=1
+        sum = y+n
+        y /= sum
+        n /= sum
+
+        ME = min(y,n)
+        ME *= len(subset)/len(data)
+        out.append(ME)
+
+    return out
+
+def infomationGain(data):
+    return 0
+
+def giniIndex(data):
+    return 0
+
+root.gainFunction = infomationGain
+
+root.split(6)
