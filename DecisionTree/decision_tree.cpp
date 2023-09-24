@@ -191,6 +191,16 @@ public:
     {
         std::cout << print(0, "root");
     }
+
+    std::string predict(std::vector<std::string> input) {
+        if (this->isLeaf)
+            return MCV;
+        
+        if (this->next.count(input[bestHeuristicIdx]) == 0)
+            return MCV;
+        
+        return next[input[bestHeuristicIdx]]->predict(input);
+    }
 };
 
 
@@ -238,7 +248,7 @@ std::vector<double> entropy(std::vector<std::vector<std::string>> data) {
     std::vector<double> out;
 
     std::map<std::string, double> defCounter;
-    std::vector<std::map<std::string, double>> counters;
+    std::vector<std::map<std::string, std::map<std::string, double>>> counters;
 
     // setup the default counter to have every output as a key
     for (auto entry : data)
@@ -247,14 +257,32 @@ std::vector<double> entropy(std::vector<std::vector<std::string>> data) {
     
     // add a copy of defCounter to counters for every input
     for (int i = 0; i < data[0].size() - 1; i++)
-        counters.push_back(std::map<std::string, double>(defCounter));
+        counters.push_back(std::map<std::string, std::map<std::string, double>>());
 
     // count occurances
     for (auto entry : data)
-        for (int i = 0; i < entry.size() - 1; i++)
-            counters[i][entry[i]]++;
+        for (int i = 0; i < entry.size() - 1; i++) {
+            if (counters[i].count(entry[i]) == 0)
+                counters[i].emplace(entry[i], std::map<std::string, double>(defCounter));
+            counters[i][entry[i]][entry.back()]++;
+        }
+
+    for (int i = 0; i < data[0].size() - 1; i++) {
+        out.push_back(1.0);
+        for (auto [k, m] : counters[i]) {
+            double minisum = 0;
+            for (auto [o, c] : m)
+                minisum += c;
+            for (auto [o, c] : m)
+                out[i] -= (c/data.size()) * log2(c/minisum);
+        }
+    }
 
     return out;
+}
+
+std::vector<double> giniIndex(std::vector<std::vector<std::string>> data) {
+
 }
 
 
@@ -269,9 +297,11 @@ int main()
     std::vector<std::vector<std::string>> data;
 
     std::fstream f;
-    f.open("in.csv", std::ios::in);
+    f.open("test.csv", std::ios::in);
 
     std::string line, val, tmp;
+
+
 
     while (f.good())
     {
@@ -285,12 +315,24 @@ int main()
         
         data.push_back(entry);
     }
+     std::cout << "here" << std::endl;
 
     decisionTree root(data, &majorityError);
 
-    root.split(5);
+    root.split(0);
 
-    root.print();
+    int y, n = 0;
+     std::cout << "here" << std::endl;
+
+    for(auto i : data) {
+        if (root.predict(i) == "+")
+            y++;
+        else if (root.predict(i) == "-")
+            n++;
+    }
+
+    std::cout <<"Y " << y << "   N " << n << std::endl;
+
 
 
     return 0;
